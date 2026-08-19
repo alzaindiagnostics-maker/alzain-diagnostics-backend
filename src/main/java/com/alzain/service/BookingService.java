@@ -57,7 +57,7 @@ public class BookingService {
                 .build();
 
         Booking saved = bookingRepository.save(booking);
-        log.info("Booking saved successfully to MySQL: ID={}, BookingId={}, Status=PENDING", saved.getId(), saved.getBookingId());
+        log.info("Booking saved successfully to Database: ID={}, BookingId={}, Status=PENDING", saved.getId(), saved.getBookingId());
 
         // Send admin notification AFTER successful DB save (catch any SMTP errors inside service)
         try {

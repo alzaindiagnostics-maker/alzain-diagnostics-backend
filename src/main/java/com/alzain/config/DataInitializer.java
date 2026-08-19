@@ -63,7 +63,7 @@ public class DataInitializer implements CommandLineRunner {
                 log.info("Admin password reset to default seed password hash: {}", adminUsername);
             }
             userRepository.save(admin);
-            log.info("Verified active admin account in MySQL: username={}, email={}, role=ROLE_ADMIN", admin.getUsername(), admin.getEmail());
+            log.info("Verified active admin account in Database: username={}, email={}, role=ROLE_ADMIN", admin.getUsername(), admin.getEmail());
         } else {
             User admin = User.builder()
                     .username(adminUsername)
@@ -103,7 +103,7 @@ public class DataInitializer implements CommandLineRunner {
             return; // Seed data already loaded
         }
 
-        log.info("Seeding initial diagnostic packages and tests into MySQL...");
+        log.info("Seeding initial diagnostic packages and tests into Database...");
 
         // 1. GULF MEDICAL PACKAGE
         packageRepository.save(PackageItem.builder()
