@@ -43,26 +43,26 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(Customizer.withDefaults())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(exceptions -> exceptions
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Full authentication is required to access this resource\",\"path\":\"" + request.getRequestURI() + "\"}");
-                })
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.getWriter().write("{\"status\":403,\"error\":\"Forbidden\",\"message\":\"Access denied\",\"path\":\"" + request.getRequestURI() + "\"}");
-                })
-            )
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/public/**", "/api/auth/**").permitAll()
-                .requestMatchers("/api/admin/**").authenticated()
-                .anyRequest().permitAll()
-            );
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Full authentication is required to access this resource\",\"path\":\"" + request.getRequestURI() + "\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.getWriter().write("{\"status\":403,\"error\":\"Forbidden\",\"message\":\"Access denied\",\"path\":\"" + request.getRequestURI() + "\"}");
+                        })
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/public/**", "/api/auth/**").permitAll()
+                        .requestMatchers("/api/admin/**").authenticated()
+                        .anyRequest().permitAll()
+                );
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -72,11 +72,21 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+
+        // Explicit allowed origins for local dev and production Vercel apps
+        configuration.setAllowedOrigins(List.of(
+                "https://alzain-diagnostics-b93j.vercel.app",
+                "https://alzain-diagnostics-admin-jj9rfvp3b.vercel.app",
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:3000"
+        ));
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"));
+        configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
