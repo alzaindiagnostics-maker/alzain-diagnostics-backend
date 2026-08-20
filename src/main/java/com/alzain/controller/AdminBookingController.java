@@ -24,6 +24,10 @@ public class AdminBookingController {
         List<BookingResponseDTO> bookings = adminBookingService.getAllBookingsAdmin(status);
         return ResponseEntity.ok(bookings);
     }
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<BookingResponseDTO> getBookingById(@PathVariable Long id) {
