@@ -22,10 +22,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
+        String rawRole = user.getRole() != null ? user.getRole().trim() : "ADMIN";
+        String authority = rawRole.startsWith("ROLE_") ? rawRole : "ROLE_" + rawRole;
+
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+                Collections.singletonList(new SimpleGrantedAuthority(authority))
         );
     }
 }

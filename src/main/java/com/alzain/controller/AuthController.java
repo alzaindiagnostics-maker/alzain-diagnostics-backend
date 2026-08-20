@@ -5,8 +5,9 @@ import com.alzain.dto.AdminLoginDTO;
 import com.alzain.dto.ForgotPasswordRequestDTO;
 import com.alzain.dto.ResetPasswordDTO;
 import com.alzain.service.AdminAuthService;
+import com.alzain.service.AdminUserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,10 +16,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private AdminAuthService adminAuthService;
+    private final AdminAuthService adminAuthService;
+    private final AdminUserService adminUserService;
 
     @PostMapping("/admin/login")
     public ResponseEntity<AdminAuthResponseDTO> adminLogin(@Valid @RequestBody AdminLoginDTO loginRequest) {
@@ -34,13 +36,13 @@ public class AuthController {
 
     @PostMapping("/admin/forgot-password")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO request) {
-        String message = adminAuthService.processForgotPassword(request.getEmail());
+        String message = adminUserService.processForgotPassword(request.getEmail());
         return ResponseEntity.ok(Map.of("message", message));
     }
 
     @PostMapping("/admin/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordDTO request) {
-        String message = adminAuthService.resetPassword(request);
+        String message = adminUserService.resetPassword(request);
         return ResponseEntity.ok(Map.of("message", message));
     }
 }

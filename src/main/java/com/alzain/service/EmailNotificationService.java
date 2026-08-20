@@ -4,17 +4,21 @@ import com.alzain.entity.Booking;
 import com.alzain.entity.Notification;
 import com.alzain.entity.Review;
 import com.alzain.repository.NotificationRepository;
-import com.resend.Resend;
-import com.resend.services.emails.model.CreateEmailOptions;
-import com.resend.services.emails.model.CreateEmailResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -187,27 +191,39 @@ public class EmailNotificationService {
             log.warn("{} Skipping Resend HTTP email dispatch for [{}] to {}", reason, subject, recipient);
             return new String[]{null, reason};
         }
-        try {
-            Resend resend = new Resend(resendApiKey.trim());
 
-            String fromAddress = resendFromEmail != null && !resendFromEmail.trim().isEmpty()
+        try {
+            String fromAddress = (resendFromEmail != null && !resendFromEmail.trim().isEmpty())
                     ? resendFromEmail.trim()
                     : "onboarding@resend.dev";
 
-            CreateEmailOptions params = CreateEmailOptions.builder()
-                    .from(fromAddress)
-                    .to(recipient.trim())
-                    .subject(subject)
-                    .html(htmlContent)
-                    .build();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(resendApiKey.trim());
 
-            CreateEmailResponse response = resend.emails().send(params);
-            String resendId = response != null ? response.getId() : null;
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("from", fromAddress);
+            requestBody.put("to", new String[]{recipient.trim()});
+            requestBody.put("subject", subject);
+            requestBody.put("html", htmlContent);
 
-            log.info("Resend HTTP Email SUCCESS: Sent [{}] to {}. Resend ID: {}", subject, recipient, resendId);
-            return new String[]{resendId, null};
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<Map> responseEntity = restTemplate.postForEntity("https://api.resend.com/emails", entity, Map.class);
+
+            if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
+                Object idObj = responseEntity.getBody().get("id");
+                String resendId = idObj != null ? idObj.toString() : null;
+                log.info("Resend REST API Email SUCCESS: Sent [{}] to {}. Resend ID: {}", subject, recipient, resendId);
+                return new String[]{resendId, null};
+            } else {
+                String errorMsg = "Resend API returned non-2xx status: " + responseEntity.getStatusCode();
+                log.error("Resend REST API Email FAILURE for [{}] to {}: {}", subject, recipient, errorMsg);
+                return new String[]{null, errorMsg};
+            }
         } catch (Exception e) {
-            log.error("Resend HTTP Email FAILURE for [{}] to {}: {}", subject, recipient, e.getMessage());
+            log.error("Resend REST API Email EXCEPTION for [{}] to {}: {}", subject, recipient, e.getMessage());
             return new String[]{null, e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()};
         }
     }
