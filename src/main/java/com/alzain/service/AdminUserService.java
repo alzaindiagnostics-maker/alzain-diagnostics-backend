@@ -28,7 +28,7 @@ public class AdminUserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailNotificationService emailNotificationService;
 
-    @Value("${app.admin.frontend.url:http://localhost:5174}")
+    @Value("${app.admin.frontend.url:https://alzain-diagnostics-admin-beta.vercel.app}")
     private String adminFrontendUrl;
 
     @Transactional
@@ -43,7 +43,11 @@ public class AdminUserService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        String resetLink = adminFrontendUrl + "/reset-password?token=" + resetToken;
+        String cleanBaseUrl = (adminFrontendUrl != null && !adminFrontendUrl.trim().isEmpty())
+                ? adminFrontendUrl.trim().replaceAll("/+$", "")
+                : "https://alzain-diagnostics-admin-beta.vercel.app";
+
+        String resetLink = cleanBaseUrl + "/reset-password?token=" + resetToken;
         log.info("Generated password reset token for admin {}: {}", user.getUsername(), resetToken);
 
         emailNotificationService.sendPasswordResetNotification(user.getEmail(), resetLink);
