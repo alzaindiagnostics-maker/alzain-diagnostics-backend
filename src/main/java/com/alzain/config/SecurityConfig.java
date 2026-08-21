@@ -76,6 +76,7 @@ public class SecurityConfig {
         // Explicit allowed origins for local dev and production Vercel apps
         configuration.setAllowedOrigins(List.of(
                 "https://alzain-diagnostics-b93j.vercel.app",
+                "https://alzain-diagnostics-admin-beta.vercel.app",
                 "https://alzain-diagnostics-admin-jj9rfvp3b.vercel.app",
                 "http://localhost:5173",
                 "http://localhost:5174",
