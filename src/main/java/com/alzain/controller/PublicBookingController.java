@@ -2,6 +2,7 @@ package com.alzain.controller;
 
 import com.alzain.dto.BookingRequestDTO;
 import com.alzain.dto.BookingResponseDTO;
+import com.alzain.dto.PublicBookingTrackDTO;
 import com.alzain.service.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +30,8 @@ public class PublicBookingController {
     }
 
     @GetMapping("/track/{bookingId}")
-    public ResponseEntity<BookingResponseDTO> trackBooking(@PathVariable String bookingId) {
-        return bookingService.getBookingByBookingId(bookingId)
+    public ResponseEntity<PublicBookingTrackDTO> trackBooking(@PathVariable String bookingId) {
+        return bookingService.getPublicBookingByBookingId(bookingId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

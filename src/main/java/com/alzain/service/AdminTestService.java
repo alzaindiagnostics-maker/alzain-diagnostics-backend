@@ -48,6 +48,18 @@ public class AdminTestService {
         return testRepository.save(test);
     }
 
+    public List<String> getTestCategories() {
+        return testRepository.findDistinctCategories();
+    }
+
+    public TestItem toggleTestStatus(Long id) {
+        TestItem test = testRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Test not found with id: " + id));
+        test.setActive(test.getActive() == null || !test.getActive());
+        test.setUpdatedAt(LocalDateTime.now());
+        return testRepository.save(test);
+    }
+
     public void deleteTest(Long id) {
         if (!testRepository.existsById(id)) {
             throw new ResourceNotFoundException("Test not found with id: " + id);

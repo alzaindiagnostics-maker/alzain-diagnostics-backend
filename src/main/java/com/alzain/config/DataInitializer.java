@@ -2,6 +2,7 @@ package com.alzain.config;
 
 import com.alzain.entity.BusinessSetting;
 import com.alzain.entity.PackageItem;
+import com.alzain.entity.TestItem;
 import com.alzain.entity.User;
 import com.alzain.repository.BusinessSettingRepository;
 import com.alzain.repository.PackageRepository;
@@ -17,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -40,11 +43,11 @@ public class DataInitializer implements CommandLineRunner {
     private String adminEmail;
 
     @Override
-    @Transactional
     public void run(String... args) throws Exception {
         seedAdminUser();
         seedBusinessSettings();
         seedPackagesAndTests();
+        seedInitialTests();
     }
 
     private void seedAdminUser() {
@@ -55,14 +58,7 @@ public class DataInitializer implements CommandLineRunner {
 
         if (existingUser.isPresent()) {
             User admin = existingUser.get();
-            admin.setEmail(adminEmail);
-            admin.setRole("ROLE_ADMIN");
-            if (!passwordEncoder.matches(adminPassword, admin.getPassword())) {
-                admin.setPassword(passwordEncoder.encode(adminPassword));
-                log.info("Admin password reset to default seed password hash: {}", adminUsername);
-            }
-            userRepository.save(admin);
-            log.info("Verified active admin account in Database: username={}, email={}, role=ROLE_ADMIN", admin.getUsername(), admin.getEmail());
+            log.info("Verified active admin account in Database: username={}, email={}, role={}", admin.getUsername(), admin.getEmail(), admin.getRole());
         } else {
             User admin = User.builder()
                     .username(adminUsername)
@@ -76,24 +72,32 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedBusinessSettings() {
-        createOrUpdateSetting("business_name", "AL-ZAIN DIAGNOSTICS", "Laboratory Business Name");
-        createOrUpdateSetting("business_tagline", "ACCURATE | RELIABLE | TRUSTED", "Business Tagline");
-        createOrUpdateSetting("business_address", "Rajampet Road, Near V.M. Hospital, Pullampet, Andhra Pradesh - 516107", "Laboratory Address");
-        createOrUpdateSetting("primary_phone", "+918374874335", "Primary Contact Number");
-        createOrUpdateSetting("secondary_phone", "+919949963552", "Secondary Contact Number");
-        createOrUpdateSetting("whatsapp_number", "+918374874335", "WhatsApp Contact Number");
-        createOrUpdateSetting("email", "alzaindiagnostics@gmail.com", "Business Email Address");
-        createOrUpdateSetting("website", "www.alzaindiagnostics.com", "Official Website");
-        createOrUpdateSetting("instagram", "AL_ZAIN_DIAGNOSTICS", "Instagram Handle");
-    }
+        List<BusinessSetting> defaults = List.of(
+                BusinessSetting.builder().settingKey("business_name").settingValue("AL-ZAIN DIAGNOSTICS").description("Laboratory Business Name").build(),
+                BusinessSetting.builder().settingKey("business_tagline").settingValue("ACCURATE | RELIABLE | TRUSTED").description("Business Tagline").build(),
+                BusinessSetting.builder().settingKey("business_address").settingValue("Rajampet Road, Near V.M. Hospital, Pullampet, Andhra Pradesh - 516107").description("Laboratory Address").build(),
+                BusinessSetting.builder().settingKey("primary_phone").settingValue("+918374874335").description("Primary Contact Number").build(),
+                BusinessSetting.builder().settingKey("secondary_phone").settingValue("+919949963552").description("Secondary Contact Number").build(),
+                BusinessSetting.builder().settingKey("whatsapp_number").settingValue("+918374874335").description("WhatsApp Contact Number").build(),
+                BusinessSetting.builder().settingKey("email").settingValue("alzaindiagnostics@gmail.com").description("Business Email Address").build(),
+                BusinessSetting.builder().settingKey("website").settingValue("www.alzaindiagnostics.com").description("Official Website").build(),
+                BusinessSetting.builder().settingKey("instagram").settingValue("AL_ZAIN_DIAGNOSTICS").description("Instagram Handle").build()
+        );
 
-    private void createOrUpdateSetting(String key, String value, String desc) {
-        BusinessSetting setting = businessSettingRepository.findBySettingKey(key)
-                .orElseGet(() -> BusinessSetting.builder().settingKey(key).build());
+        List<BusinessSetting> existing = businessSettingRepository.findAll();
+        Set<String> existingKeys = existing.stream()
+                .map(BusinessSetting::getSettingKey)
+                .filter(Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
 
-        setting.setSettingValue(value);
-        setting.setDescription(desc);
-        businessSettingRepository.save(setting);
+        List<BusinessSetting> newSettings = defaults.stream()
+                .filter(s -> !existingKeys.contains(s.getSettingKey()))
+                .collect(java.util.stream.Collectors.toList());
+
+        if (!newSettings.isEmpty()) {
+            businessSettingRepository.saveAll(newSettings);
+            log.info("Seeded {} initial business settings into database.", newSettings.size());
+        }
     }
 
     private void seedPackagesAndTests() {
@@ -297,5 +301,32 @@ public class DataInitializer implements CommandLineRunner {
 
         packageRepository.saveAll(initialPackages);
         log.info("Seeded {} initial packages successfully into database.", initialPackages.size());
+    }
+
+    private void seedInitialTests() {
+        if (testRepository.count() > 0) {
+            return; // Test master data already initialized
+        }
+
+        log.info("Seeding initial diagnostic test master data into Database...");
+
+        List<TestItem> initialTests = List.of(
+                TestItem.builder().name("CBP / CBC (Complete Blood Picture)").category("Hematology").shortDescription("Complete Blood Count including RBC, WBC, Platelets, Hemoglobin.").active(true).build(),
+                TestItem.builder().name("ESR (Erythrocyte Sedimentation Rate)").category("Hematology").shortDescription("Inflammatory marker evaluation.").active(true).build(),
+                TestItem.builder().name("Fasting Blood Sugar (FBS)").category("Diabetes").shortDescription("Measures blood glucose levels after 10-12 hours fasting.").active(true).build(),
+                TestItem.builder().name("Post-Prandial Blood Sugar (PPBS)").category("Diabetes").shortDescription("Measures blood glucose 2 hours after meal.").active(true).build(),
+                TestItem.builder().name("HbA1c (Glycated Hemoglobin)").category("Diabetes").shortDescription("Average blood glucose levels over 3-month period.").active(true).build(),
+                TestItem.builder().name("Thyroid Profile (T3, T4, TSH)").category("Thyroid").shortDescription("Comprehensive thyroid hormone evaluation.").active(true).build(),
+                TestItem.builder().name("Liver Function Test (LFT)").category("Liver").shortDescription("Assesses liver enzymes, Bilirubin, and Serum Proteins.").active(true).build(),
+                TestItem.builder().name("Kidney Function Test (KFT)").category("Kidney").shortDescription("Assesses Urea, Creatinine, and Uric Acid levels.").active(true).build(),
+                TestItem.builder().name("Lipid Profile").category("Lipid").shortDescription("Cholesterol, HDL, LDL, VLDL, and Triglycerides.").active(true).build(),
+                TestItem.builder().name("Serum Electrolytes (Na+, K+, Ca++)").category("Electrolytes").shortDescription("Blood sodium, potassium, and calcium mineral balance.").active(true).build(),
+                TestItem.builder().name("Dengue NS1 Antigen").category("Fever").shortDescription("Early detection marker for acute Dengue infection.").active(true).build(),
+                TestItem.builder().name("Widal Test").category("Fever").shortDescription("Serological test for Typhoid fever.").active(true).build(),
+                TestItem.builder().name("Urine Analysis Routine").category("Health Checkup").shortDescription("Routine physical, chemical, and microscopic urine examination.").active(true).build()
+        );
+
+        testRepository.saveAll(initialTests);
+        log.info("Seeded {} diagnostic test master parameters successfully into database.", initialTests.size());
     }
 }

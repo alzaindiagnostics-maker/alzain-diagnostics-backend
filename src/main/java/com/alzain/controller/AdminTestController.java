@@ -36,6 +36,17 @@ public class AdminTestController {
         return ResponseEntity.ok(updated);
     }
 
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getTestCategories() {
+        return ResponseEntity.ok(adminTestService.getTestCategories());
+    }
+
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<TestItem> toggleTestStatus(@PathVariable Long id) {
+        TestItem updated = adminTestService.toggleTestStatus(id);
+        return ResponseEntity.ok(updated);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTest(@PathVariable Long id) {
         adminTestService.deleteTest(id);

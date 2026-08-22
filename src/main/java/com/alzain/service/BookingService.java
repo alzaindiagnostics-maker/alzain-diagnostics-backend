@@ -2,6 +2,7 @@ package com.alzain.service;
 
 import com.alzain.dto.BookingRequestDTO;
 import com.alzain.dto.BookingResponseDTO;
+import com.alzain.dto.PublicBookingTrackDTO;
 import com.alzain.dto.NotificationDTO;
 import com.alzain.entity.Booking;
 import com.alzain.entity.Notification;
@@ -72,6 +73,56 @@ public class BookingService {
     public Optional<BookingResponseDTO> getBookingByBookingId(String bookingId) {
         return bookingRepository.findByBookingId(bookingId.trim().toUpperCase())
                 .map(this::mapToResponseDTO);
+    }
+
+    public Optional<PublicBookingTrackDTO> getPublicBookingByBookingId(String bookingId) {
+        return bookingRepository.findByBookingId(bookingId.trim().toUpperCase())
+                .map(this::mapToPublicTrackDTO);
+    }
+
+    public PublicBookingTrackDTO mapToPublicTrackDTO(Booking booking) {
+        String name = booking.getCustomerName() != null ? booking.getCustomerName() : "";
+        String maskedName = maskName(name);
+
+        String phone = booking.getPhone() != null ? booking.getPhone() : "";
+        String maskedPhone = maskPhone(phone);
+
+        return PublicBookingTrackDTO.builder()
+                .bookingId(booking.getBookingId())
+                .maskedCustomerName(maskedName)
+                .maskedPhone(maskedPhone)
+                .packageName(booking.getPackageName())
+                .preferredDate(booking.getPreferredDate())
+                .preferredTime(booking.getPreferredTime())
+                .isHomeCollection(booking.getIsHomeCollection())
+                .city(booking.getCity())
+                .status(booking.getStatus())
+                .paymentStatus(booking.getPaymentStatus() != null ? booking.getPaymentStatus() : "PENDING")
+                .createdAt(booking.getCreatedAt())
+                .build();
+    }
+
+    private String maskName(String name) {
+        if (name == null || name.trim().isEmpty()) return "***";
+        String[] parts = name.trim().split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < parts.length; i++) {
+            String p = parts[i];
+            if (p.length() <= 2) {
+                sb.append(p.charAt(0)).append("*");
+            } else {
+                sb.append(p.charAt(0)).append("*".repeat(Math.max(1, p.length() - 1)));
+            }
+            if (i < parts.length - 1) sb.append(" ");
+        }
+        return sb.toString();
+    }
+
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 4) return "******";
+        String clean = phone.replaceAll("\\D", "");
+        if (clean.length() <= 4) return "******" + clean;
+        return "******" + clean.substring(clean.length() - 4);
     }
 
     private String generateUniqueBookingId() {

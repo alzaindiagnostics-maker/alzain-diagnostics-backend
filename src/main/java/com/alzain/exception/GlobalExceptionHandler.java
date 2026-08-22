@@ -99,10 +99,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGlobalException(
             Exception ex, HttpServletRequest request) {
+        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).error("Unhandled exception at {}: ", request.getRequestURI(), ex);
         ErrorResponseDTO errorResponse = ErrorResponseDTO.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("Internal Server Error")
-                .message(ex.getMessage() != null ? ex.getMessage() : "An unexpected server error occurred.")
+                .message("An unexpected error occurred. Please try again later.")
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();

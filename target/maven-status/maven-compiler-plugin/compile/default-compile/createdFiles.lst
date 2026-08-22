@@ -5,6 +5,7 @@ com\alzain\dto\ResetPasswordDTO$ResetPasswordDTOBuilder.class
 com\alzain\dto\UpdateBookingStatusDTO$UpdateBookingStatusDTOBuilder.class
 com\alzain\repository\PackageRepository.class
 com\alzain\repository\UserRepository.class
+com\alzain\dto\PublicBookingTrackDTO$PublicBookingTrackDTOBuilder.class
 com\alzain\service\AdminBookingService.class
 com\alzain\controller\PublicBookingController.class
 com\alzain\dto\ForgotPasswordRequestDTO.class
@@ -30,9 +31,12 @@ com\alzain\dto\BookingResponseDTO$BookingResponseDTOBuilder.class
 com\alzain\dto\BookingResponseDTO.class
 com\alzain\dto\ChangePasswordDTO.class
 com\alzain\dto\PackageRequestDTO$PackageRequestDTOBuilder.class
+com\alzain\security\RateLimitingFilter$RequestCounter.class
 com\alzain\service\AdminUserService.class
+com\alzain\security\RateLimitingFilter.class
 com\alzain\controller\AdminUserController.class
 com\alzain\entity\User.class
+com\alzain\dto\PublicBookingTrackDTO.class
 com\alzain\dto\AdminLoginDTO.class
 com\alzain\controller\HomeController.class
 com\alzain\AlzainApplication.class
@@ -80,6 +84,7 @@ com\alzain\controller\AdminBookingController.class
 com\alzain\entity\TestItem.class
 com\alzain\dto\ErrorResponseDTO$ErrorResponseDTOBuilder.class
 com\alzain\entity\Notification.class
+com\alzain\security\TokenBlacklistService.class
 com\alzain\dto\ResetPasswordRequestDTO.class
 com\alzain\exception\ResourceNotFoundException.class
 com\alzain\entity\PackageItem$PackageItemBuilder.class

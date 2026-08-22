@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -34,25 +35,33 @@ public class AdminUserService {
     @Transactional
     public String processForgotPassword(String email) {
         String trimmedEmail = email != null ? email.trim() : "";
-        User user = userRepository.findByEmail(trimmedEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin user not found with email: " + trimmedEmail));
+        Optional<User> userOptional = userRepository.findByEmail(trimmedEmail);
 
-        String resetToken = UUID.randomUUID().toString();
-        user.setResetToken(resetToken);
-        user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(30));
-        user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            String resetToken = UUID.randomUUID().toString();
+            user.setResetToken(resetToken);
+            user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(30));
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
 
-        String cleanBaseUrl = (adminFrontendUrl != null && !adminFrontendUrl.trim().isEmpty())
-                ? adminFrontendUrl.trim().replaceAll("/+$", "")
-                : "https://alzain-diagnostics-admin-beta.vercel.app";
+            String cleanBaseUrl = (adminFrontendUrl != null && !adminFrontendUrl.trim().isEmpty())
+                    ? adminFrontendUrl.trim().replaceAll("/+$", "")
+                    : "https://alzain-diagnostics-admin-beta.vercel.app";
 
-        String resetLink = cleanBaseUrl + "/reset-password?token=" + resetToken;
-        log.info("Generated password reset token for admin {}: {}", user.getUsername(), resetToken);
+            String resetLink = cleanBaseUrl + "/reset-password?token=" + resetToken;
+            log.info("Generated password reset token for admin {}", user.getUsername());
 
-        emailNotificationService.sendPasswordResetNotification(user.getEmail(), resetLink);
+            try {
+                emailNotificationService.sendPasswordResetNotification(user.getEmail(), resetLink);
+            } catch (Exception e) {
+                log.error("Failed to send password reset email: {}", e.getMessage());
+            }
+        } else {
+            log.warn("Password reset requested for non-existent admin email: {}", trimmedEmail);
+        }
 
-        return "Password reset link sent successfully to " + trimmedEmail;
+        return "If an account exists for that email, a password reset link has been sent.";
     }
 
     @Transactional
